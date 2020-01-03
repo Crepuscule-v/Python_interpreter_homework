@@ -1626,7 +1626,7 @@ class EvalVisitor : public Python3BaseVisitor
                     //Bigint - Bigint
                     if (ans.is<Bigint>() && tmp.is<Bigint>())
                     {
-                        ans = ans.as<Bigint>() + tmp.as<Bigint>();
+                        ans = ans.as<Bigint>() - tmp.as<Bigint>();
                     }
                     //double - Bigint
                     else if (ans.is<double>() && tmp.is<Bigint>())
@@ -1821,6 +1821,7 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     star_rec += 1;
                 }
+                //   /
                 else if (div_index == tmp_index)
                 {
                     if (ans.is<Bigint>() && tmp.is<Bigint>())
@@ -1866,43 +1867,56 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     div_rec += 1;
                 }
+                //  // 
                 else if (idiv_index == tmp_index)
                 {
                     if (ans.is<Bigint>() && tmp.is<Bigint>())
                     {
+                        double x = 1;
                         if (tmp.as<Bigint>() == (Bigint)0)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
                             return 1;
                         }
-                        ans = ans.as<Bigint>() / tmp.as<Bigint>();
+                        antlrcpp::Any tmp_ans ;
+                        tmp_ans = ans.as<Bigint>() / tmp.as<Bigint>();
+                        if ((ans.as<Bigint>() >= Bigint(0) && tmp.as<Bigint>() >= (Bigint)0) || (ans.as<Bigint>() < Bigint(0) && tmp.as<Bigint>() < (Bigint)0)){ ans = tmp_ans.as<Bigint>();}
+                        else { ans = tmp_ans.as<Bigint>() - Bigint(x); }
                     }
                     else if (ans.is<bool>() && tmp.is<bool>())
                     {
+                        double x = 1;
                         if (tmp.as<bool>() == false)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
                             return 1;
                         }
-                        ans = Bigint(ans.as<bool>()) / Bigint(tmp.as<bool>());
+                        ans = ans.as<bool>() / tmp.as<bool>();
                     }
                     else if (ans.is<bool>() && tmp.is<Bigint>())
                     {
+                        double x = 1;
                         if (tmp.as<Bigint>() == (Bigint)0)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
                             return 1;
                         }
-                        ans = Bigint((ans.as<bool>())) / tmp.as<Bigint>();
+                        ans = (Bigint)ans.as<bool>() / tmp.as<Bigint>();
+                        if (tmp.as<Bigint>() < Bigint(0))
+                            ans = Bigint(ans.as<bool>()) - Bigint(x);
                     }
                     else if (ans.is<Bigint>() && tmp.is<bool>())
                     {
+                        double x = 1;
                         if (tmp.as<bool>() == false)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
                             return 1;
                         }
-                        ans = ans.as<Bigint>() / Bigint(tmp.as<bool>());
+                        antlrcpp::Any tmp_ans;
+                        tmp_ans = ans.as<Bigint>() / (Bigint)tmp.as<bool>();
+                        if (ans.as<Bigint>() < Bigint(0))
+                            ans = tmp_ans.as<Bigint>() - Bigint(x);
                     }
                     else if (ans.is<double>() || tmp.is<double>())
                     {
@@ -1916,6 +1930,7 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     idiv_rec += 1;
                 }
+                
                 else if (mod_index == tmp_index)
                 {
                     if (ans.is<Bigint>() && tmp.is<Bigint>())
@@ -1971,12 +1986,9 @@ class EvalVisitor : public Python3BaseVisitor
         }
     }
 
-    //待补充
     antlrcpp::Any visitFactor(Python3Parser::FactorContext *ctx) override
     {
-        if (ctx->factor() == nullptr)
-            return visitAtom_expr(ctx->atom_expr());
-        else
+        if (ctx->factor() != nullptr)
         {
             antlrcpp::Any ans = visit(ctx->factor());
             // 判断ans 是否为 变量名
@@ -2005,15 +2017,16 @@ class EvalVisitor : public Python3BaseVisitor
             {
                 if (ans.is<Bigint>())
                 {
-                    ans.as<Bigint>() * Bigint(-1);
+                    Bigint x(-1.0);
+                    ans = ans.as<Bigint>() * x;
                 }
                 else if (ans.is<double>())
                 {
-                    ans.as<double>() * -1;
+                    ans = ans.as<double>() * -1;
                 }
                 else if (ans.is<bool>())
                 {
-                    (bool) (ans.as<bool>() * -1);
+                    ans  = (bool) (ans.as<bool>() * -1);
                 }
                 else if (ans.is<std::string>())
                 {
@@ -2023,6 +2036,7 @@ class EvalVisitor : public Python3BaseVisitor
                 return ans;
             }
         }
+        else return visitAtom_expr(ctx -> atom_expr());
     }
 
     antlrcpp::Any visitAtom_expr(Python3Parser::Atom_exprContext *ctx) override
