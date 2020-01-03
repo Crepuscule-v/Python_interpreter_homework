@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by Lethe_k on 2019/12/8.
 //
 
@@ -34,7 +34,9 @@ public:
     explicit Bigint(const string &str);                                                      // string 类构造函数
     explicit Bigint(const bool &x){val.clear(); sign = 1 , length = 1, val.push_back(x);}
     explicit Bigint(const double &x);                                                        //double
+    //explicit Bigint(const int &x);
     Bigint(const Bigint &B);                                                                 // 复制构造函数，
+
 
     //显式类型转化,// 不改变成员的值，为常量函数
     explicit operator double () const ;

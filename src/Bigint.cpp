@@ -1,4 +1,4 @@
-//Bigint.cpp
+﻿//Bigint.cpp
 //Created by Lethe_k on 2019/12/8.
 //
 #include "Bigint.h"
@@ -45,8 +45,7 @@ Bigint::Bigint(const Bigint &B) {
 
 Bigint::Bigint(const double &x) {
     if (val.size() != 0) val.clear();
-    string str = nullptr;
-    str = to_string(x);
+    string str = to_string(x);
     for (int i = 0; i < 7; i++) {
         str.pop_back();
     }
@@ -69,7 +68,7 @@ Bigint operator+(const Bigint &B1, const Bigint &B2) {  //从头开始  8位8位
     if (B1.val.size() == B2.val.size())  ans.val.push_back(0);
     int carry = 0;
     int i;
-
+    ans.sign = 1;
     for (i = 0; i < tmp.val.size(); i++)
     {
         int now;
@@ -91,10 +90,11 @@ Bigint operator-(const Bigint &B) {
 }
 
 Bigint operator-(const Bigint &B1, const Bigint &B2) {
-    if (!B2.sign) {return B1 + (-B2); }
-    if (!B1.sign) {return -((-B1) + B2); }
+    if (!B2.sign) { return B1 + (-B2); }
+    if (!B1.sign) {return -((-B1) + B2);}
     if (B1 < B2) {return -(B2 - B1); }
     Bigint ans;
+    ans.sign = 1;
     ans.val.clear();
     for (int i = 0, g = 0; ; i++) {
         if (g == 0 && i >= B1.val.size() && i >= B2.val.size()) break;
@@ -155,7 +155,7 @@ Bigint operator/(const Bigint &B1, const Bigint &B2) {
     Bigint num;
     if (num.val.size() != 0)   num.val.clear();
     int i ;
-    for (i = 0; i < la - lb; i++) {
+    for (i = 0; i <= la - lb; i++) {
         num = B.power(la - lb - i);
         while (A >= num) {
             A = A - num;
@@ -240,6 +240,8 @@ Bigint Bigint::operator%=(const Bigint &B2) {
 }
 
 bool operator>(const Bigint &B1, const Bigint &B2) {
+    if (B1.sign > B2.sign) return true;
+    if (B1.sign < B2.sign) return false;
     if (B1.length > B2.length) return true;
     if (B1.length < B2.length) return false;
     int i = B1.val.size() - 1;
@@ -311,7 +313,7 @@ istream &operator>>(istream &is, Bigint &B) {
 Bigint::operator double() const{
     double ans = 0;
     double x = sign ? 1 : -1;
-    for (int i = 0; i < val.size(); i++) {
+    for (int i = 0; (i < val.size() && i < 2); i++) {
         ans += val[i] * x;
         x *= BASE;
     }
