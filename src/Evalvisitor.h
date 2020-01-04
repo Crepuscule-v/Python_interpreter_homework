@@ -145,13 +145,11 @@ class EvalVisitor : public Python3BaseVisitor
                         bool tmp_bool = R_val.as<bool>();
                         if (tmp_bool)
                         {
-                            std::string true_str = "True";
-                            glb_map[map_size - 1][name_str] = true_str;
+                            glb_map[map_size - 1][name_str] = true;
                         }
                         else
                         {
-                            std::string false_str = "False";
-                            glb_map[map_size - 1][name_str] = false_str;
+                            glb_map[map_size - 1][name_str] = false;
                         }
                         break;
                     }
@@ -246,7 +244,7 @@ class EvalVisitor : public Python3BaseVisitor
             if (val_pos == -1)
             {
                 std::cerr << "Error : Undefined variables!\n";
-                return 1;
+                exit(0);
             }
             antlrcpp::Any right_val = visit(ctx->testlist()[1]);
 
@@ -300,7 +298,7 @@ class EvalVisitor : public Python3BaseVisitor
                 else
                 {
                     std::cerr << "Error: Undefined operation!\n";
-                    return 1;
+                    exit(0);
                 }
                 break;
             }
@@ -336,7 +334,7 @@ class EvalVisitor : public Python3BaseVisitor
                 else
                 {
                     std::cerr << "Error: Undefined operation!\n";
-                    return 1;
+                    exit(0);
                 }
                 break;
             }
@@ -414,7 +412,7 @@ class EvalVisitor : public Python3BaseVisitor
                 else
                 {
                     std::cerr << "Error: Undefined operation!\n";
-                    return 1;
+                    exit(0);
                 }
                 break;
             }
@@ -425,7 +423,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<Bigint>() == (Bigint)0)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     else
                     {
@@ -438,7 +436,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<Bigint>() == Bigint(0))
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = double(left_val.as<bool>()) / (double)right_val.as<Bigint>();
                 }
@@ -447,7 +445,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<bool>() == false)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = (double)left_val.as<Bigint>() / (double)(right_val.as<bool>());
                 }
@@ -456,7 +454,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<bool>() == false)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = (double)left_val.as<bool>() / (double)right_val.as<bool>();
                 }
@@ -465,7 +463,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<Bigint>() == (Bigint)0)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     else
                         glb_map[val_pos][map_key] = left_val.as<double>() / (double)right_val.as<Bigint>();
@@ -475,7 +473,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<double>() == 0)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     else
                         glb_map[val_pos][map_key] = (double)left_val.as<Bigint>() / right_val.as<double>();
@@ -485,7 +483,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<bool>() == false)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     else
                         glb_map[val_pos][map_key] = left_val.as<double>() / (double)right_val.as<bool>();
@@ -495,7 +493,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<double>() == 0)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     else
                         glb_map[val_pos][map_key] = (double)left_val.as<bool>() / right_val.as<double>();
@@ -505,7 +503,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<double>() == 0)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     else
                         glb_map[val_pos][map_key] = left_val.as<double>() / right_val.as<double>();
@@ -513,7 +511,7 @@ class EvalVisitor : public Python3BaseVisitor
                 else
                 {
                     std::cerr << "Error: Undefined operation!\n";
-                    return 1;
+                    exit(0);
                 }
                 break;
             }
@@ -524,7 +522,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<Bigint>() == (Bigint)0)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     else
                         glb_map[val_pos][map_key] = left_val.as<Bigint>() / right_val.as<Bigint>();
@@ -535,7 +533,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<Bigint>() == Bigint(0))
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = Bigint(left_val.as<bool>()) / right_val.as<Bigint>();
                 }
@@ -544,7 +542,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<bool>() == false)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = left_val.as<Bigint>() / Bigint(right_val.as<bool>());
                 }
@@ -553,19 +551,19 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<bool>() == false)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = left_val.as<bool>() / right_val.as<bool>();
                 }
                 else if (left_val.is<double>() || right_val.is<double>())
                 {
                     std::cerr << "Undefined behavior!\n";
-                    return 1;
+                    exit(0);
                 }
                 else
                 {
                     std::cerr << "Error: Undefined operation!\n";
-                    return 1;
+                    exit(0);
                 }
                 break;
             }
@@ -576,7 +574,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<Bigint>() == (Bigint)0)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     else
                         glb_map[val_pos][map_key] = left_val.as<Bigint>() % right_val.as<Bigint>();
@@ -587,7 +585,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<Bigint>() == Bigint(0))
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = Bigint(left_val.as<bool>()) % right_val.as<Bigint>();
                 }
@@ -596,7 +594,7 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<bool>() == false)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = left_val.as<Bigint>() % Bigint(right_val.as<bool>());
                 }
@@ -605,26 +603,26 @@ class EvalVisitor : public Python3BaseVisitor
                     if (right_val.as<bool>() == false)
                     {
                         std::cerr << "Error : The divisor cannot be zero!\n";
-                        return 1;
+                        exit(0);
                     }
                     glb_map[val_pos][map_key] = left_val.as<bool>() % right_val.as<bool>();
                 }
                 else if (left_val.is<double>() || right_val.is<double>())
                 {
                     std::cerr << "Undefined behavior!\n";
-                    return 1;
+                    exit(0);
                 }
                 else
                 {
                     std::cerr << "Error: Undefined operation!\n";
-                    return 1;
+                    exit(0);
                 }
                 break;
             }
             default:
             {
                 std::cerr << "Error : Undefined operator\n";
-                return 1;
+                exit(0);
             }
             }
             return left_val;
@@ -741,7 +739,7 @@ class EvalVisitor : public Python3BaseVisitor
             else
             {
                 std::cerr << "Error : Invalid judgment conditions !\n";
-                return 1;
+                exit(0);
             }
             if (flag)
             {
@@ -797,7 +795,7 @@ class EvalVisitor : public Python3BaseVisitor
         else
         {
             std::cerr << "Error : Invalid judgment conditions !\n";
-            return 1;
+            exit(0);
         }
 
         while (flag)
@@ -844,7 +842,7 @@ class EvalVisitor : public Python3BaseVisitor
             else
             {
                 std::cerr << "Error : Invalid judgment conditions !\n";
-                return 1;
+                exit(0);
             }
         }
         glb_map.pop_back();
@@ -939,7 +937,7 @@ class EvalVisitor : public Python3BaseVisitor
                 else
                 {
                     std::cerr << "Errortype ! \n";
-                    return 1;
+                    exit(0);
                 }
             }
             return false;
@@ -999,7 +997,7 @@ class EvalVisitor : public Python3BaseVisitor
                 else
                 {
                     std::cerr << "Errortype ! \n";
-                    return 1;
+                    exit(0);
                 }
             }
             return true;
@@ -1056,7 +1054,7 @@ class EvalVisitor : public Python3BaseVisitor
             else
             {
                 std::cerr << "Errortype ! \n";
-                return 1;
+                exit(0);
             }
         }
     }
@@ -1157,7 +1155,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "TypeError: '<' not supported between these two instances !";
-                        return 1;
+                        exit(0);
                     }
                     break;
                 }
@@ -1218,7 +1216,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "TypeError: '>' not supported between these two instances !";
-                        return 1;
+                        exit(0);
                     }
                     break;
                 }
@@ -1284,7 +1282,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "TypeError: '==' not supported between these two instances !";
-                        return 1;
+                        exit(0);
                     }
                     break;
                 }
@@ -1345,7 +1343,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "TypeError: '>=' not supported between these two instances !";
-                        return 1;
+                        exit(0);
                     }
                     break;
                 }
@@ -1406,7 +1404,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "TypeError: '<=' not supported between these two instances !";
-                        return 1;
+                        exit(0);
                     }
                     break;
                 }
@@ -1467,14 +1465,14 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "TypeError: '!=' not supported between these two instances !";
-                        return 1;
+                        exit(0);
                     }
                     break;
                 }
                 default:
                 {
                     std::cerr << "Error : Undefined comparison symbol ! \n";
-                    return 1;
+                    exit(0);
                 }
                 }
             }
@@ -1537,6 +1535,7 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                 }
             }
+            int x = Find_type(ans);
             int add_index = 1e9;
             int minus_index = 1e9;
             for (int i = 0; i < token_num; i++)
@@ -1554,6 +1553,7 @@ class EvalVisitor : public Python3BaseVisitor
                         }
                     }
                 }
+
                 if (add_size > 0)
                 {
                     add_index = ctx->ADD()[add_rec]->getSymbol()->getTokenIndex();
@@ -1617,7 +1617,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "Error operation type! \n ";
-                        return 1;
+                        exit(0);
                     }
                     add_rec += 1;
                 }
@@ -1651,6 +1651,10 @@ class EvalVisitor : public Python3BaseVisitor
                     //bool - Bigint
                     else if (ans.is<bool>() && tmp.is<Bigint>())
                     {
+                       // std::cout << Bigint(ans.as<bool>());
+                        //std::cout << std::endl;
+                        //std::cout << tmp.as<Bigint>();
+                        //std::cout << std::endl;
                         ans = Bigint((ans.as<bool>())) - tmp.as<Bigint>();
                     }
                     //bool - bool
@@ -1671,7 +1675,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "Error operation type! \n ";
-                        return 1;
+                        exit(0);
                     }
                     minus_rec += 1;
                 }
@@ -1817,7 +1821,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else
                     {
                         std::cerr << "Error operation type!\n ";
-                        return 1;
+                        exit(0);
                     }
                     star_rec += 1;
                 }
@@ -1829,7 +1833,7 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<Bigint>() == Bigint(0))
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = double(ans.as<Bigint>()) / double(tmp.as<Bigint>());
                     }
@@ -1838,7 +1842,7 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<bool>() == false)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = double(ans.as<bool>()) / double(tmp.as<bool>());
                     }
@@ -1847,7 +1851,7 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<Bigint>() == (Bigint)0)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = (double)ans.as<bool>() / (double)tmp.as<Bigint>();
                     }
@@ -1856,14 +1860,14 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<bool>() == false)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = double(ans.as<Bigint>()) / double((tmp.as<bool>()));
                     }
                     else
                     {
                         std::cerr << "Error operation type!\n ";
-                        return 1;
+                        exit(0);
                     }
                     div_rec += 1;
                 }
@@ -1876,11 +1880,13 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<Bigint>() == (Bigint)0)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         antlrcpp::Any tmp_ans ;
+                        antlrcpp::Any judge_ans;
+                        judge_ans = double(ans.as<Bigint>()) / double(tmp.as<Bigint>());
                         tmp_ans = ans.as<Bigint>() / tmp.as<Bigint>();
-                        if ((ans.as<Bigint>() >= Bigint(0) && tmp.as<Bigint>() >= (Bigint)0) || (ans.as<Bigint>() < Bigint(0) && tmp.as<Bigint>() < (Bigint)0)){ ans = tmp_ans.as<Bigint>();}
+                        if ((ans.as<Bigint>() >= Bigint(0) && tmp.as<Bigint>() >= (Bigint)0) || (ans.as<Bigint>() < Bigint(0) && tmp.as<Bigint>() < (Bigint)0) || ((double)tmp_ans.as<Bigint>() == judge_ans.as<double>())){ ans = tmp_ans.as<Bigint>();}
                         else { ans = tmp_ans.as<Bigint>() - Bigint(x); }
                     }
                     else if (ans.is<bool>() && tmp.is<bool>())
@@ -1889,7 +1895,7 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<bool>() == false)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = ans.as<bool>() / tmp.as<bool>();
                     }
@@ -1899,7 +1905,7 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<Bigint>() == (Bigint)0)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = (Bigint)ans.as<bool>() / tmp.as<Bigint>();
                         if (tmp.as<Bigint>() < Bigint(0))
@@ -1911,22 +1917,19 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<bool>() == false)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
-                        antlrcpp::Any tmp_ans;
-                        tmp_ans = ans.as<Bigint>() / (Bigint)tmp.as<bool>();
-                        if (ans.as<Bigint>() < Bigint(0))
-                            ans = tmp_ans.as<Bigint>() - Bigint(x);
+                        ans = ans.as<Bigint>() / (Bigint)tmp.as<bool>();
                     }
                     else if (ans.is<double>() || tmp.is<double>())
                     {
                         std::cerr << "Undefined behavior\n ";
-                        return 1;
+                        exit(0);
                     }
                     else
                     {
                         std::cerr << "Error operation type!\n ";
-                        return 1;
+                        exit(0);
                     }
                     idiv_rec += 1;
                 }
@@ -1938,7 +1941,7 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<Bigint>() == Bigint(0))
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = ans.as<Bigint>() % tmp.as<Bigint>();
                     }
@@ -1947,7 +1950,7 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<bool>() == false)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = Bigint((ans.as<bool>())) % Bigint((tmp.as<bool>()));
                     }
@@ -1956,7 +1959,7 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<Bigint>() == Bigint(0))
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = Bigint((ans.as<bool>())) % tmp.as<Bigint>();
                     }
@@ -1965,19 +1968,19 @@ class EvalVisitor : public Python3BaseVisitor
                         if (tmp.as<bool>() == false)
                         {
                             std::cerr << "Error : The divisor cannot be zero!\n";
-                            return 1;
+                            exit(0);
                         }
                         ans = ans.as<Bigint>() % Bigint((tmp.as<bool>()));
                     }
                     else if (ans.is<double>() || tmp.is<double>())
                     {
                         std::cerr << "Undefined behavior\n ";
-                        return 1;
+                        exit(0);
                     }
                     else
                     {
                         std::cerr << "Error operation type!\n ";
-                        return 1;
+                        exit(0);
                     }
                     mod_rec += 1;
                 }
@@ -2009,7 +2012,7 @@ class EvalVisitor : public Python3BaseVisitor
                 if (ans.is<std::string>())
                 {
                     std::cerr << "Invalid operator !\n";
-                    return 1;
+                    exit(0);
                 }
                 return ans;
             }
@@ -2031,7 +2034,7 @@ class EvalVisitor : public Python3BaseVisitor
                 else if (ans.is<std::string>())
                 {
                     std::cerr << "Invalid operator !\n";
-                    return 1;
+                    exit(0);
                 }
                 return ans;
             }
@@ -2081,6 +2084,159 @@ class EvalVisitor : public Python3BaseVisitor
                     std::cout << "False" << std::endl;
             }
             return tmp;
+        }
+        else if (ret == "int")
+        {
+            antlrcpp::Any r_val = visit(ctx->trailer()->arglist()->argument()[0]->test());
+            int map_size = glb_map.size();
+            if (r_val.is<std::string>())
+            {
+                for (int i = map_size - 1; i >= 0; i--)
+                {
+                    if (Find_map_key(glb_map[i], r_val.as<std::string>()))
+                    {
+                        r_val = glb_map[i][r_val.as<std::string>()];
+                        break;
+                    }
+                }
+            }
+            if (r_val.is<Bigint>())
+            {
+                return r_val;
+            }
+            else if (r_val.is<double>())
+            {
+                return (Bigint) r_val.as<double>();
+            }
+            else if (r_val.is<bool>())
+            {
+                return (Bigint) r_val.as<bool>();
+            }
+            else if (r_val.is<std::string>())
+            {
+                return (Bigint) r_val.as<std::string>();
+            }
+            else 
+            {
+                std::cerr << "Invalid type conversion !\n";
+                exit(0);
+            }
+        }
+        else if (ret == "float")
+        {
+            antlrcpp::Any r_val = visit(ctx->trailer()->arglist()->argument()[0]->test());
+            int map_size = glb_map.size();
+            if (r_val.is<std::string>())
+            {
+                for (int i = map_size - 1; i >= 0; i--)
+                {
+                    if (Find_map_key(glb_map[i], r_val.as<std::string>()))
+                    {
+                        r_val = glb_map[i][r_val.as<std::string>()];
+                        break;
+                    }
+                }
+            }
+            if (r_val.is<Bigint>())
+            {
+                return (double)r_val.as<Bigint>();
+            }
+            else if (r_val.is<double>())
+            {
+                return r_val;
+            }
+            else if (r_val.is<bool>())
+            {
+                return (double) r_val.as<bool>();
+            }
+            else if (r_val.is<std::string>())
+            {
+                char c[1000];
+                std::string s1 = r_val.as<std::string>();
+                strcpy(c, s1.c_str());
+                double x = atof(c);
+                return x;
+            }
+            else 
+            {
+                std::cerr << "Invalid type conversion !\n";
+                exit(0);
+            }
+        }
+        else if (ret == "bool")
+        {
+            antlrcpp::Any r_val = visit(ctx->trailer()->arglist()->argument()[0]->test());
+            int map_size = glb_map.size();
+            if (r_val.is<std::string>())
+            {
+                for (int i = map_size - 1; i >= 0; i--)
+                {
+                    if (Find_map_key(glb_map[i], r_val.as<std::string>()))
+                    {
+                        r_val = glb_map[i][r_val.as<std::string>()];
+                        break;
+                    }
+                }
+            }
+            if (r_val.is<Bigint>())
+            {
+                return (r_val.as<Bigint>() == Bigint(0)) ? false : true;
+            }
+            else if (r_val.is<double>())
+            {
+                return (r_val.as<double>() == 0) ? false : true;
+            }
+            else if (r_val.is<bool>())
+            {
+                return r_val.as<bool>();
+            }
+            else if (r_val.is<std::string>())
+            {
+                string ans = r_val.as<std::string>();
+                return (ans.empty()) ? false : true; 
+            }
+            else 
+            {
+                std::cerr << "Invalid type conversion !\n";
+                exit(0);
+            }
+        }
+        else if (ret == "str")
+        {
+            antlrcpp::Any r_val = visit(ctx->trailer()->arglist()->argument()[0]->test());
+            int map_size = glb_map.size();
+            if (r_val.is<std::string>())
+            {
+                for (int i = map_size - 1; i >= 0; i--)
+                {
+                    if (Find_map_key(glb_map[i], r_val.as<std::string>()))
+                    {
+                        r_val = glb_map[i][r_val.as<std::string>()];
+                        break;
+                    }
+                }
+            }
+            if (r_val.is<Bigint>())
+            {
+                return (std::string) r_val.as<Bigint>();
+            }
+            else if (r_val.is<double>())
+            {
+                return std::to_string(r_val.as<double>());
+            }
+            else if (r_val.is<bool>())
+            {
+                return (r_val.as<bool>()) ? "True" : "False";
+            }
+            else if (r_val.is<std::string>())
+            {
+                return r_val.as<std::string>();
+            }
+            else 
+            {
+                std::cerr << "Invalid type conversion !\n";
+                exit(0);
+            }
         }
     }
 

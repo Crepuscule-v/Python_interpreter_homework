@@ -15,25 +15,38 @@ bool Bigint::is_Zero() const {
 }
 
 Bigint::Bigint(const string &str) {
-    if (val.size() != 0) val.clear();
-    if (str[0] == '-') {sign = 0; length = str.size() - 1;}
-    else {sign = 1; length = str.size();}
-    int num = ((int)str.size() - 1) / BIT + 1;
-    int ans;
-    for (int i = 0; i < num; i++) {     //num =2
-        int tail = (int)str.length() - i * BIT;
-        int head = max(tail - BIT, (int) (!sign));
-        string x = str.substr(head, tail - head);
-        ans = 0;
-        int y = 1;
-        for (int j = x.size() - 1; j >= 0; j--) {
-            ans += y * ( x[j] - '0');
-            y *= 10;
-        }
-        val.push_back(ans);
+    //add something 
+    char c[5000];
+    string s1;
+    strcpy(c, s1.c_str());
+    if (s1.find(".") != std::string::npos)
+    {
+        double x = atof(c);
+        *this = Bigint (x);
+        SetLength();
     }
-    CutLeadingZero();
-    SetLength();
+    //
+    else{
+        if (val.size() != 0) val.clear();
+        if (str[0] == '-') {sign = 0; length = str.size() - 1;}
+        else {sign = 1; length = str.size();}
+        int num = ((int)str.size() - 1) / BIT + 1;
+        int ans;
+        for (int i = 0; i < num; i++) {     //num =2
+            int tail = (int)str.length() - i * BIT;
+            int head = max(tail - BIT, (int) (!sign));
+            string x = str.substr(head, tail - head);
+            ans = 0;
+            int y = 1;
+            for (int j = x.size() - 1; j >= 0; j--) {
+                ans += y * ( x[j] - '0');
+                y *= 10;
+            }
+            val.push_back(ans);
+        }
+        CutLeadingZero();
+        SetLength();
+    }
 }
 
 Bigint::Bigint(const Bigint &B) {
