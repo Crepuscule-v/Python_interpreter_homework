@@ -1553,14 +1553,21 @@ class EvalVisitor : public Python3BaseVisitor
                         }
                     }
                 }
-
-                if (add_size > 0)
+                if (add_size > 0 && add_rec != add_size)
                 {
                     add_index = ctx->ADD()[add_rec]->getSymbol()->getTokenIndex();
                 }
-                if (minus_size > 0)
+                else
+                {
+                    add_index = 1e9;
+                }
+                if (minus_size > 0 && minus_rec != minus_size)
                 {
                     minus_index = ctx->MINUS()[minus_rec]->getSymbol()->getTokenIndex();
+                }
+                else
+                {
+                    minus_index = 1e9;
                 }
                 if (add_index < minus_index)
                 {
@@ -1597,7 +1604,7 @@ class EvalVisitor : public Python3BaseVisitor
                     //bool + bool
                     else if (ans.is<bool>() && tmp.is<bool>())
                     {
-                        ans = ans.as<bool>() + tmp.as<bool>();
+                        ans = (Bigint)ans.as<bool>() + (Bigint)tmp.as<bool>();
                     }
                     //bool + double
                     else if (ans.is<bool>() && tmp.is<double>())
@@ -1621,7 +1628,7 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     add_rec += 1;
                 }
-                else
+                else if (add_index > minus_index)
                 {
                     //Bigint - Bigint
                     if (ans.is<Bigint>() && tmp.is<Bigint>())
@@ -1651,10 +1658,6 @@ class EvalVisitor : public Python3BaseVisitor
                     //bool - Bigint
                     else if (ans.is<bool>() && tmp.is<Bigint>())
                     {
-                       // std::cout << Bigint(ans.as<bool>());
-                        //std::cout << std::endl;
-                        //std::cout << tmp.as<Bigint>();
-                        //std::cout << std::endl;
                         ans = Bigint((ans.as<bool>())) - tmp.as<Bigint>();
                     }
                     //bool - bool
@@ -1730,21 +1733,37 @@ class EvalVisitor : public Python3BaseVisitor
                         }
                     }
                 }
-                if (star_size > 0)
+                if (star_size > 0 && star_rec != star_size)
                 {
                     star_index = ctx->STAR()[star_rec]->getSymbol()->getTokenIndex();
                 }
-                if (div_size > 0)
+                else 
+                {
+                    star_index = 1e9;
+                }
+                if (div_size > 0 && div_rec != div_size)
                 {
                     div_index = ctx->DIV()[div_rec]->getSymbol()->getTokenIndex();
                 }
-                if (idiv_size > 0)
+                else 
+                {
+                    div_index = 1e9;
+                }
+                if (idiv_size > 0 && idiv_size != idiv_rec)
                 {
                     idiv_index = ctx->IDIV()[idiv_rec]->getSymbol()->getTokenIndex();
                 }
-                if (mod_size > 0)
+                else 
+                {
+                    idiv_index = 1e9;
+                }
+                if (mod_size > 0 && mod_size != mod_rec)
                 {
                     mod_index = ctx->MOD()[mod_rec]->getSymbol()->getTokenIndex();
+                }
+                else 
+                {
+                    mod_index = 1e9;
                 }
 
                 int tmp_index = min(min(star_index, div_index), min(idiv_index, mod_index));
@@ -1765,7 +1784,7 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     else if (ans.is<Bigint>() && tmp.is<std::string>())
                     {
-                        if (ans.as<Bigint>() == (Bigint)0)
+                        if (ans.as<Bigint>() == (Bigint)0 || ans.as<Bigint>() < (Bigint)0)
                         {
                             ans = "";
                             continue;
@@ -1778,9 +1797,9 @@ class EvalVisitor : public Python3BaseVisitor
                         }
                         ans = str;
                     }
-                    else if (ans.is<std::string>() && tmp.is<Bigint>())
+                    else if (ans.is<std::string>() && tmp.is<Bigint>() )
                     {
-                        if (tmp.as<Bigint>() == Bigint(0))
+                        if (tmp.as<Bigint>() == Bigint(0) || tmp.as<Bigint>() < (Bigint)0)
                         {
                             ans = "";
                             continue;
@@ -1817,6 +1836,14 @@ class EvalVisitor : public Python3BaseVisitor
                     {
                         if (!tmp.as<bool>())
                             ans = "";
+                    }
+                    else if (ans.is<bool>() && tmp.is<double>())
+                    {
+                        ans = double(ans.as<bool>()) * tmp.as<double>();
+                    }
+                    else if (ans.is<double>() && tmp.is<bool>())
+                    {
+                        ans = double(tmp.as<bool>()) * ans.as<double>();
                     }
                     else
                     {
@@ -1864,6 +1891,42 @@ class EvalVisitor : public Python3BaseVisitor
                         }
                         ans = double(ans.as<Bigint>()) / double((tmp.as<bool>()));
                     }
+                    else if (ans.is<Bigint>() && tmp.is<double>())
+                    {
+                        if (tmp.as<double>() == 0)
+                        {
+                            std::cerr << "Error : The divisor cannot be zero!\n";
+                            exit(0);
+                        }
+                        ans = double(ans.as<Bigint>()) / tmp.as<double>();
+                    }
+                    else if (ans.is<double>() && tmp.is<Bigint>())
+                    {
+                        if (tmp.as<Bigint>() == (Bigint)0)
+                        {
+                            std::cerr << "Error : The divisor cannot be zero!\n";
+                            exit(0);
+                        }
+                        ans = ans.as<double>() / (double)tmp.as<Bigint>();
+                    }
+                    else if (ans.is<double>() && tmp.is<bool>())
+                    {
+                        if (tmp.as<bool>() == false)
+                        {
+                            std::cerr << "Error : The divisor cannot be zero!\n";
+                            exit(0);
+                        }
+                        ans = ans.as<double>() / (double)tmp.as<bool>();
+                    }
+                    else if (ans.is<bool>() && tmp.as<double>())
+                    {
+                        if (tmp.as<double>() == 0)
+                        {
+                            std::cerr << "Error : The divisor cannot be zero!\n";
+                            exit(0);
+                        }
+                        ans = (double)ans.as<bool>() / tmp.as<double>();
+                    }
                     else
                     {
                         std::cerr << "Error operation type!\n ";
@@ -1897,7 +1960,7 @@ class EvalVisitor : public Python3BaseVisitor
                             std::cerr << "Error : The divisor cannot be zero!\n";
                             exit(0);
                         }
-                        ans = ans.as<bool>() / tmp.as<bool>();
+                        ans = (Bigint)ans.as<bool>() / (Bigint)tmp.as<bool>();
                     }
                     else if (ans.is<bool>() && tmp.is<Bigint>())
                     {
@@ -2049,41 +2112,47 @@ class EvalVisitor : public Python3BaseVisitor
         std::string ret = ctx->atom()->NAME()->toString();
         if (ret == "print")
         {
-            antlrcpp::Any tmp = visit(ctx->trailer()->arglist()->argument()[0]->test());
-            if (tmp.is<std::string>())
+            int argument_size = ctx -> trailer() -> arglist() -> argument().size();
+            for (int i = 0; i < argument_size; i++)
             {
-                std::string Key = tmp.as<std::string>();
-                int map_size = glb_map.size();
-                for (int i = map_size - 1; i >= 0; i--)
+                if(i) std::cout << " ";
+                antlrcpp::Any tmp = visit(ctx -> trailer() -> arglist() -> argument()[i] -> test());
+                if (tmp.is<std::string>())
                 {
-                    if (Find_map_key(glb_map[i], Key))
+                    std::string Key = tmp.as<std::string>();
+                    int map_size = glb_map.size();
+                    for (int i = map_size - 1; i >= 0; i--)
                     {
-                        tmp = glb_map[i][Key];
-                        break;
+                        if (Find_map_key(glb_map[i], Key))
+                        {
+                            tmp = glb_map[i][Key];
+                            break;
+                        }
                     }
                 }
+                if (tmp.is<std::string>())
+                {
+                    std::cout << tmp.as<std::string>();
+                }
+                else if (tmp.is<double>())
+                {
+                    std::cout << tmp.as<double>();
+                }
+                else if (tmp.is<Bigint>())
+                {
+                    std::cout << tmp.as<Bigint>();
+                }
+                else if (tmp.is<bool>())
+                {
+                    bool x = tmp.as<bool>();
+                    if (x)
+                        std::cout << "True";
+                    else
+                        std::cout << "False";
+                }
             }
-            if (tmp.is<std::string>())
-            {
-                std::cout << tmp.as<std::string>() << std::endl;
-            }
-            else if (tmp.is<double>())
-            {
-                std::cout << tmp.as<double>() << std::endl;
-            }
-            else if (tmp.is<Bigint>())
-            {
-                std::cout << tmp.as<Bigint>() << std::endl;
-            }
-            else if (tmp.is<bool>())
-            {
-                bool x = tmp.as<bool>();
-                if (x)
-                    std::cout << "True" << std::endl;
-                else
-                    std::cout << "False" << std::endl;
-            }
-            return tmp;
+            std::cout << std::endl;
+            return 1;
         }
         else if (ret == "int")
         {
@@ -2312,6 +2381,7 @@ class EvalVisitor : public Python3BaseVisitor
 
     antlrcpp::Any visitArglist(Python3Parser::ArglistContext *ctx) override
     {
+
         return visitArgument(ctx->argument()[0]);
     }
 
