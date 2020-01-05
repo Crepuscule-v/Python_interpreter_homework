@@ -98,7 +98,7 @@ class EvalVisitor : public Python3BaseVisitor
         if (ctx->testlist().size() == 1)
             return visit(ctx->testlist()[0]);
         int sign_num = ctx->ASSIGN().size();
-        if (sign_num >= 1)
+        if (sign_num > 1)
         {
             antlrcpp::Any R_val = visit(ctx->testlist().back());
             // 如果被赋的值不是变量名
@@ -222,6 +222,76 @@ class EvalVisitor : public Python3BaseVisitor
                 }
                 return R_val;
             }
+        }
+        else if (sign_num == 1)
+        {
+            //总共有val_num 个值需要赋
+            int val_num = ctx->testlist()[0]->test().size();
+            int right_num = ctx->testlist()[1]->test().size();
+            if (val_num != right_num)
+            {
+                std::cerr << "Invalid assign !\n";
+                exit(1);
+            }
+            int map_size = glb_map.size();
+            for (int i = 0; i < val_num; i++)
+            {
+                antlrcpp::Any le_val = visit(ctx->testlist()[0]->test()[i]);
+                antlrcpp::Any ri_val = visit(ctx->testlist()[1]->test()[i]);
+                if (ri_val.is<std::string>())
+                {
+                    for (int i = map_size - 1; i >= 0; i--)
+                    {
+                        if (Find_map_key(glb_map[i], ri_val.as<std::string>()))
+                        {
+                            ri_val = glb_map[i][ri_val.as<std::string>()];
+                            break;
+                        }
+                    }
+                }
+                int flag = Find_type(ri_val);
+                std::string name_str = le_val.as<std::string>();
+                switch (flag)
+                {
+                case 1:
+                {
+                    std::string tmp_Str = ri_val.as<std::string>();
+                    glb_map[map_size - 1][name_str] = tmp_Str;
+                    break;
+                }
+                case 2:
+                {
+                    Bigint tmp_Int = ri_val.as<Bigint>();
+                    glb_map[map_size - 1][name_str] = tmp_Int;
+                    break;
+                }
+                case 3:
+                {
+                    bool tmp_bool = ri_val.as<bool>();
+                    if (tmp_bool)
+                    {
+                        glb_map[map_size - 1][name_str] = true;
+                    }
+                    else
+                    {
+                        glb_map[map_size - 1][name_str] = false;
+                    }
+                    break;
+                }
+                case 4:
+                {
+                    double tmp_double = ri_val.as<double>();
+                    glb_map[map_size - 1][name_str] = tmp_double;
+                    break;
+                }
+                default:
+                {
+                    std::cout << "error : Invalid type！" << std::endl;
+                    break;
+                }
+                }
+            }
+            return 1;
         }
         // augassign
         else
