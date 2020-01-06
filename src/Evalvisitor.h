@@ -2355,7 +2355,21 @@ class EvalVisitor : public Python3BaseVisitor
                         std::string val_name = ctx->trailer()->arglist()->argument(i)->NAME()->toString();
                         antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument(i)->test());
                         if (val.is<std::string>())
-                            Is_Val_Name(val);
+                        {
+                            int map_size = glb_map.size();
+                            string s1 = val.as<std::string>();
+                            if (s1.find("\"") == std::string::npos)
+                            {
+                                for (int i = map_size - 2; i >= 0; i--)
+                                {
+                                    if (Find_map_key(glb_map[i], val.as<std::string>()))
+                                    {
+                                        val = glb_map[i][val.as<std::string>()];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         if (val.is<std::string>())
                         {
                             glb_map[map_size - 1][val_name] = val.as<std::string>();
@@ -2381,7 +2395,7 @@ class EvalVisitor : public Python3BaseVisitor
             // 无参，或不传参的情况
             else
             {
-                if(func_node -> parameters() -> typedargslist() != nullptr)
+                if (func_node->parameters()->typedargslist() != nullptr)
                 {
                     Python3Parser::TypedargslistContext *Typedargslist_node = func_node->parameters()->typedargslist();
                     int map_size = glb_map.size();
