@@ -10,7 +10,9 @@
 #include <vector>
 
 std::vector<std::map<std::string, antlrcpp::Any>> glb_map;
-
+//Python3Parser::FuncdefContext *func_node = visitAtom(ctx -> atom()).as<Python3Parser::FuncdefContext*>();
+//我再单独搞一张存funcdef 名字的 map
+std::map<std::string, Python3Parser::FuncdefContext *> func_map;
 class EvalVisitor : public Python3BaseVisitor
 {
     //判断any 的类型
@@ -48,21 +50,31 @@ class EvalVisitor : public Python3BaseVisitor
 
     antlrcpp::Any visitFuncdef(Python3Parser::FuncdefContext *ctx) override
     {
+        //我把map 记录下来
+        std::string func_name = ctx->NAME()->toString();
+        func_map[func_name] = ctx;
         return visitChildren(ctx);
     }
 
     antlrcpp::Any visitParameters(Python3Parser::ParametersContext *ctx) override
     {
-        return visitChildren(ctx);
+        if (ctx->typedargslist() != nullptr)
+        {
+            return visitTypedargslist(ctx->typedargslist());
+        }
+        else
+            return visitChildren(ctx);
     }
 
     antlrcpp::Any visitTypedargslist(Python3Parser::TypedargslistContext *ctx) override
     {
+
         return visitChildren(ctx);
     }
 
     antlrcpp::Any visitTfpdef(Python3Parser::TfpdefContext *ctx) override
     {
+
         return visitChildren(ctx);
     }
 
@@ -84,13 +96,9 @@ class EvalVisitor : public Python3BaseVisitor
     antlrcpp::Any visitSmall_stmt(Python3Parser::Small_stmtContext *ctx) override
     {
         if (ctx->expr_stmt() != nullptr)
-        {
             return visitExpr_stmt(ctx->expr_stmt());
-        }
         else
-        {
             return visitFlow_stmt(ctx->flow_stmt());
-        }
     }
     // flag = 1 表示字符串，2 表示 bigint  3 表示 bool   4表示double  5 none(待补充)
     antlrcpp::Any visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) override
@@ -245,7 +253,7 @@ class EvalVisitor : public Python3BaseVisitor
         {
             antlrcpp::Any key = visit(ctx->testlist()[0]);
             std::string map_key = key.as<std::string>();
-            antlrcpp::Any left_val = visit(ctx -> testlist()[0]);
+            antlrcpp::Any left_val = visit(ctx->testlist()[0]);
             int map_size = glb_map.size(); //  返回此时全局有几张图
             int val_pos = -1;              // 记录最后边变量第一次出现实在哪张图
             if (left_val.is<std::string>())
@@ -320,13 +328,13 @@ class EvalVisitor : public Python3BaseVisitor
                     glb_map[val_pos][map_key] = double(left_val.as<Bigint>()) + right_val.as<double>();
 
                 else if (left_val.is<std::string>() && right_val.is<std::string>())
-                    {
-                        std::string s1 = left_val.as<std::string>();
-                        string s2 = right_val.as<std::string>();
-                        s1 = s1.substr(0, s1.size() - 1);
-                        s2 = s2.substr(1, s2.size() - 1);
-                        glb_map[val_pos][map_key] = s1 + s2;
-                    }
+                {
+                    std::string s1 = left_val.as<std::string>();
+                    string s2 = right_val.as<std::string>();
+                    s1 = s1.substr(0, s1.size() - 1);
+                    s2 = s2.substr(1, s2.size() - 1);
+                    glb_map[val_pos][map_key] = s1 + s2;
+                }
                 else
                 {
                     std::cerr << "Error: Undefined operation!\n";
@@ -425,7 +433,7 @@ class EvalVisitor : public Python3BaseVisitor
                     {
                         glb_map[val_pos][map_key] = "";
                     }
-                    else 
+                    else
                     {
                         std::string str = left_val.as<std::string>();
                         std::string str_right = str.substr(1, str.size() - 2);
@@ -732,8 +740,6 @@ class EvalVisitor : public Python3BaseVisitor
 
     antlrcpp::Any visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) override
     {
-        std::map<std::string, antlrcpp::Any> inner_map;
-        glb_map.push_back(inner_map);
         if (ctx->if_stmt() != nullptr)
             return visitIf_stmt(ctx->if_stmt());
         else if (ctx->while_stmt() != nullptr)
@@ -800,7 +806,6 @@ class EvalVisitor : public Python3BaseVisitor
         {
             visitSuite(ctx->suite()[num]);
         }
-        glb_map.pop_back();
         return 1;
     }
 
@@ -902,7 +907,6 @@ class EvalVisitor : public Python3BaseVisitor
                 exit(0);
             }
         }
-        glb_map.pop_back();
         return 1;
     }
 
@@ -1916,7 +1920,7 @@ class EvalVisitor : public Python3BaseVisitor
                             continue;
                         }
                         std::string str = tmp.as<std::string>();
-                        std::string s1 = str.substr(0, str.size() - 1); 
+                        std::string s1 = str.substr(0, str.size() - 1);
                         str = str.substr(1, str.size() - 2);
                         double cnt = double(ans.as<Bigint>());
                         for (double i = 1; i < cnt; i++)
@@ -2265,7 +2269,8 @@ class EvalVisitor : public Python3BaseVisitor
             int argument_size = ctx->trailer()->arglist()->argument().size();
             for (int i = 0; i < argument_size; i++)
             {
-                if (i)  std::cout << " ";     
+                if (i)
+                    std::cout << " ";
                 antlrcpp::Any tmp = visit(ctx->trailer()->arglist()->argument()[i]->test());
                 if (tmp.is<std::string>())
                 {
@@ -2500,6 +2505,82 @@ class EvalVisitor : public Python3BaseVisitor
                 std::cerr << "Invalid type conversion !\n";
                 exit(0);
             }
+        }
+        else
+        {
+            Python3Parser::FuncdefContext *func_node = func_map[ret];
+            std::map<std::string, antlrcpp::Any> inner_map;
+            glb_map.push_back(inner_map);
+            if (ctx->trailer()->arglist() != nullptr)
+            {
+                Python3Parser::TypedargslistContext *Typedargslist_node = func_node->parameters()->typedargslist();
+                int incoming_val_num = ctx->trailer()->arglist()->argument().size(); // 传入的变量数量
+                int contain_null_val_num = Typedargslist_node->tfpdef().size();      //所有的变量数量
+                // 总共有 argument_num 个参数
+                int map_size = glb_map.size();
+                for (int i = 0; i < incoming_val_num; i++)
+                {
+                    if (ctx->trailer()->arglist()->argument()[i]->ASSIGN() == nullptr)
+                    {
+                        // postion 传参
+                        std::string val_name = Typedargslist_node->tfpdef()[i]->NAME()->toString();
+                        antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument()[i]->test());
+                        if (val.is<std::string>())
+                        {
+                            string s1 = val.as<std::string>();
+                            if (s1.find("\"") == std::string::npos)
+                            {
+                                for (int i = map_size - 2; i >= 0; i--)
+                                {
+                                    if (Find_map_key(glb_map[i], val.as<std::string>()))
+                                    {
+                                        val = glb_map[i][val.as<std::string>()];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (val.is<std::string>())    glb_map[map_size - 1][val_name] = val.as<std::string>();
+                        else if (val.is<Bigint>())    glb_map[map_size - 1][val_name] = val.as<Bigint>();
+                        else if (val.is<double>())    glb_map[map_size - 1][val_name] = val.as<double>();
+                        else if (val.is<bool>())      glb_map[map_size - 1][val_name] = val.as<bool>();
+                    }
+                    else // keyword 传参
+                    {
+                        std::string val_name = ctx->trailer()->arglist()->argument()[i]->NAME()->toString();
+                        antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument()[i]->test());
+                        if (val.is<std::string>())
+                        {
+                            string s1 = val.as<std::string>();
+                            if (s1.find("\"") == std::string::npos)
+                            {
+                                for (int i = map_size - 2; i >= 0; i--)
+                                {
+                                    if (Find_map_key(glb_map[i], val.as<std::string>()))
+                                    {
+                                        val = glb_map[i][val.as<std::string>()];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (val.is<std::string>())    glb_map[map_size - 1][val_name] = val.as<std::string>();
+                        else if (val.is<Bigint>())    glb_map[map_size - 1][val_name] = val.as<Bigint>();
+                        else if (val.is<double>())    glb_map[map_size - 1][val_name] = val.as<double>();
+                        else if (val.is<bool>())      glb_map[map_size - 1][val_name] = val.as<bool>();
+                    }
+                }
+                for (int i = 0; i < contain_null_val_num; i++)
+                {
+                    std::string val_name = Typedargslist_node->tfpdef()[i]->NAME()->toString();
+                    if (!Find_map_key(glb_map[map_size - 1], val_name))
+                    {
+                        glb_map[map_size - 1][val_name] = visit(Typedargslist_node->test()[i]);
+                    }
+                }
+            }
+            visitSuite(func_node->suite());
+            return 1;                          // 需要添加返回值
         }
     }
 
