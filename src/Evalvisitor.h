@@ -10,18 +10,25 @@
 #include <vector>
 #include <iomanip>
 
-enum flowcontrol
-{
-    BREAK,
-    RETURN,
-    CONTINUE
-};
 std::vector<std::map<std::string, antlrcpp::Any>> glb_map;
-//Python3Parser::FuncdefContext *func_node = visitAtom(ctx -> atom()).as<Python3Parser::FuncdefContext*>();
 //我再单独搞一张存funcdef 名字的 map
 std::map<std::string, Python3Parser::FuncdefContext *> func_map;
 class EvalVisitor : public Python3BaseVisitor
 {
+    //flow_control
+    class BREAK_STMT
+    {
+    };
+    class CONTINUE_STMT
+    {
+    };
+    class RETURN_STMT
+    {
+    public:
+        antlrcpp::Any ret;
+        RETURN_STMT(const antlrcpp::Any &tmp) { ret = tmp; };
+    };
+
     //判断any 的类型
     int Find_type(antlrcpp::Any val)
     {
@@ -46,6 +53,23 @@ class EvalVisitor : public Python3BaseVisitor
             return true;
         else
             return false;
+    }
+
+    void Is_Val_Name(antlrcpp::Any &ret)
+    {
+        int map_size = glb_map.size();
+        string s1 = ret.as<std::string>();
+        if (s1.find("\"") == std::string::npos)
+        {
+            for (int i = map_size - 1; i >= 0; i--)
+            {
+                if (Find_map_key(glb_map[i], ret.as<std::string>()))
+                {
+                    ret = glb_map[i][ret.as<std::string>()];
+                    break;
+                }
+            }
+        }
     }
 
     antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) override
@@ -118,20 +142,7 @@ class EvalVisitor : public Python3BaseVisitor
             antlrcpp::Any R_val = visit(ctx->testlist().back());
             int map_size = glb_map.size(); //  返回此时全局有几张图
             if (R_val.is<std::string>())
-            {
-                std::string s1 = R_val.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], R_val.as<std::string>())) //从外到里 只要找到该变量   就break
-                        {
-                            R_val = glb_map[i][R_val.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(R_val);
             int flag = Find_type(R_val);
             for (int i = 0; i < sign_num; i++)
             {
@@ -189,20 +200,7 @@ class EvalVisitor : public Python3BaseVisitor
             antlrcpp::Any le_val = visit(ctx->testlist(0)->test(0));
             antlrcpp::Any ri_val = visit(ctx->testlist(1)->test(0));
             if (ri_val.is<std::string>())
-            {
-                std::string s1 = ri_val.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], ri_val.as<std::string>()))
-                        {
-                            ri_val = glb_map[i][ri_val.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(ri_val);
             int flag = Find_type(ri_val);
             std::string name_str = le_val.as<std::string>();
             switch (flag)
@@ -246,7 +244,7 @@ class EvalVisitor : public Python3BaseVisitor
             }
             return 1;
         }
-        else if (sign_num == 1 && ret.is<std::vector<antlrcpp::Any>>())
+        if (sign_num == 1 && ret.is<std::vector<antlrcpp::Any>>())
         {
             int val_num = ctx->testlist(0)->test().size();
             int right_num = ret.as<std::vector<antlrcpp::Any>>().size();
@@ -262,20 +260,7 @@ class EvalVisitor : public Python3BaseVisitor
             {
                 antlrcpp::Any tmp = right_val[i];
                 if (tmp.is<std::string>())
-                {
-                    std::string s1 = tmp.as<std::string>();
-                    if (s1.find("\"") == std::string::npos)
-                    {
-                        for (int j = map_size - 1; j >= 0; j--)
-                        {
-                            if (Find_map_key(glb_map[j], tmp.as<std::string>()))
-                            {
-                                tmp = glb_map[j][tmp.as<std::string>()];
-                                break;
-                            }
-                        }
-                    }
-                }
+                    Is_Val_Name(tmp);
                 right_rec.push_back(tmp);
             }
             for (int i = 0; i < val_num; i++)
@@ -334,44 +319,19 @@ class EvalVisitor : public Python3BaseVisitor
             antlrcpp::Any left_val = visit(ctx->testlist(0));
             int map_size = glb_map.size(); //  返回此时全局有几张图
             int val_pos = -1;              // 记录最后边变量第一次出现实在哪张图
-            if (left_val.is<std::string>())
+            for (int i = map_size - 1; i >= 0; i--)
             {
-                std::string s1 = left_val.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
+                if (Find_map_key(glb_map[i], left_val.as<std::string>()))
                 {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], key)) //从外到里 只要找到该变量   就break
-                        {
-                            val_pos = i;
-                            left_val = glb_map[i][map_key];
-                            break;
-                        }
-                    }
+                    val_pos = i;
+                    break;
                 }
             }
-            // 如果左边的值在所有map中都没有找到  cerr
-            if (val_pos == -1)
-            {
-                std::cerr << "Error : Undefined variables!\n";
-                exit(0);
-            }
+            if (left_val.is<std::string>())
+                Is_Val_Name(left_val);
             antlrcpp::Any right_val = visit(ctx->testlist(1));
             if (right_val.is<std::string>())
-            {
-                std::string s1 = right_val.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], right_val.as<std::string>())) //从外到里 只要找到该变量   就break
-                        {
-                            right_val = glb_map[i][right_val.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(right_val);
             antlrcpp::Any any_sign_num = visit(ctx->augassign());
             double sign_num = any_sign_num.as<double>();
             switch ((int)sign_num)
@@ -796,36 +756,38 @@ class EvalVisitor : public Python3BaseVisitor
     {
         if (ctx->BREAK() != nullptr)
         {
-            flowcontrol x = BREAK;
+            BREAK_STMT x;
             return x;
         }
-        else
-            return visitChildren(ctx);
+        return visitChildren(ctx);
     }
 
     antlrcpp::Any visitContinue_stmt(Python3Parser::Continue_stmtContext *ctx) override
     {
         if (ctx->CONTINUE() != nullptr)
         {
-            flowcontrol x = CONTINUE;
+            CONTINUE_STMT x;
             return x;
         }
-        else
-            return visitChildren(ctx);
+        return visitChildren(ctx);
     }
 
     antlrcpp::Any visitReturn_stmt(Python3Parser::Return_stmtContext *ctx) override
     {
-        if (ctx->testlist() == nullptr)
-        {
-            flowcontrol x = RETURN;
-            return x;
-        }
-        else
+        std::vector<antlrcpp::Any> tmp;
+        if (ctx->testlist() != nullptr)
         {
             antlrcpp::Any ret = visit(ctx->testlist());
-            return ret;
+            if (ret.is<std::vector<antlrcpp::Any>>())
+            {
+                tmp = ret.as<std::vector<antlrcpp::Any>>();
+                return RETURN_STMT(tmp);
+            }
+            else
+                return RETURN_STMT(ret);
         }
+        else
+            return RETURN_STMT(tmp);
     }
 
     antlrcpp::Any visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) override
@@ -847,20 +809,7 @@ class EvalVisitor : public Python3BaseVisitor
         {
             antlrcpp::Any judge = visit(ctx->test(i));
             if (judge.is<std::string>())
-            {
-                std::string s1 = judge.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], judge.as<std::string>()))
-                        {
-                            judge = glb_map[i][judge.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(judge);
             if (judge.is<bool>())
             {
                 if (judge.as<bool>())
@@ -888,15 +837,14 @@ class EvalVisitor : public Python3BaseVisitor
             }
             if (flag)
             {
-                visitSuite(ctx->suite(i));
+                return visitSuite(ctx->suite(i));
                 break;
             }
         }
         if (ctx->ELSE() != nullptr && flag == 0)
         {
-            visitSuite(ctx->suite(num));
+            return visitSuite(ctx->suite(num));
         }
-        return 1;
     }
 
     antlrcpp::Any visitWhile_stmt(Python3Parser::While_stmtContext *ctx) override
@@ -906,20 +854,7 @@ class EvalVisitor : public Python3BaseVisitor
         int flag = 0;
         int map_size = glb_map.size();
         if (judge.is<std::string>())
-        {
-            std::string s1 = judge.as<std::string>();
-            if (s1.find("\"") == std::string::npos)
-            {
-                for (int i = map_size - 1; i >= 0; i--)
-                {
-                    if (Find_map_key(glb_map[i], judge.as<std::string>()))
-                    {
-                        judge = glb_map[i][judge.as<std::string>()];
-                        break;
-                    }
-                }
-            }
-        }
+            Is_Val_Name(judge);
         if (judge.is<bool>())
         {
             if (judge.as<bool>())
@@ -951,28 +886,20 @@ class EvalVisitor : public Python3BaseVisitor
             ret = visitSuite(ctx->suite());
             judge = visit(ctx->test());
             flag = 0;
-            if (ret.is<flowcontrol>())
+            if (ret.is<BREAK_STMT>())
             {
-                if (ret.as<flowcontrol>() == BREAK)
-                    break;
-                else if (ret.as<flowcontrol>() == CONTINUE)
-                    continue;
+                ret = nullptr;
+                break;
             }
+            else if (ret.is<CONTINUE_STMT>())
+            {
+                ret = nullptr;
+                continue;
+            }
+            else if (ret.is<RETURN_STMT>())
+                break;
             if (judge.is<std::string>())
-            {
-                std::string s1 = judge.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], judge.as<std::string>()))
-                        {
-                            judge = glb_map[i][judge.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(judge);
             if (judge.is<bool>())
             {
                 if (judge.as<bool>())
@@ -999,7 +926,7 @@ class EvalVisitor : public Python3BaseVisitor
                 exit(0);
             }
         }
-        return 1;
+        return ret;
     }
 
     antlrcpp::Any visitSuite(Python3Parser::SuiteContext *ctx) override
@@ -1016,11 +943,8 @@ class EvalVisitor : public Python3BaseVisitor
             for (int i = 0; i < num; i++)
             {
                 ret = visit(ctx->stmt(i));
-                if (ret.is<flowcontrol>())
-                {
-                    if (ret.as<flowcontrol>() == BREAK || ret.is<flowcontrol>() == CONTINUE || ret.is<flowcontrol>() == RETURN)
-                        break;
-                }
+                if (ret.is<BREAK_STMT>() || ret.is<CONTINUE_STMT>() || ret.is<RETURN_STMT>())
+                    break;
             }
             return ret;
         }
@@ -1043,20 +967,7 @@ class EvalVisitor : public Python3BaseVisitor
             {
                 antlrcpp::Any tmp_and = visit(ctx->and_test(i));
                 if (tmp_and.is<std::string>())
-                {
-                    std::string s1 = tmp_and.as<std::string>();
-                    if (s1.find("\"") == std::string::npos)
-                    {
-                        for (int i = map_size - 1; i >= 0; i--)
-                        {
-                            if (Find_map_key(glb_map[i], tmp_and.as<std::string>()))
-                            {
-                                tmp_and = glb_map[i][tmp_and.as<std::string>()];
-                                break;
-                            }
-                        }
-                    }
-                }
+                    Is_Val_Name(tmp_and);
                 if (tmp_and.is<Bigint>())
                 {
                     if (tmp_and.as<Bigint>())
@@ -1109,20 +1020,7 @@ class EvalVisitor : public Python3BaseVisitor
                 antlrcpp::Any tmp_not = visit(ctx->not_test(i));
                 int map_size = glb_map.size();
                 if (tmp_not.is<std::string>())
-                {
-                    std::string s1 = tmp_not.as<std::string>();
-                    if (s1.find("\"") == std::string::npos)
-                    {
-                        for (int i = map_size - 1; i >= 0; i--)
-                        {
-                            if (Find_map_key(glb_map[i], tmp_not.as<std::string>()))
-                            {
-                                tmp_not = glb_map[i][tmp_not.as<std::string>()];
-                                break;
-                            }
-                        }
-                    }
-                }
+                    Is_Val_Name(tmp_not);
                 if (tmp_not.is<Bigint>())
                 {
                     if (tmp_not.as<Bigint>())
@@ -1172,20 +1070,7 @@ class EvalVisitor : public Python3BaseVisitor
             antlrcpp::Any tmp_end_not = visit(ctx->not_test());
             int map_size = glb_map.size();
             if (tmp_end_not.is<std::string>())
-            {
-                std::string s1 = tmp_end_not.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], tmp_end_not.as<std::string>()))
-                        {
-                            tmp_end_not = glb_map[i][tmp_end_not.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(tmp_end_not);
             if (tmp_end_not.is<Bigint>())
             {
                 if (tmp_end_not.as<Bigint>())
@@ -1240,36 +1125,10 @@ class EvalVisitor : public Python3BaseVisitor
                 int map_size = glb_map.size();
                 //std::cout << map_size;
                 if (left_val.is<std::string>())
-                {
-                    std::string s1 = left_val.as<std::string>();
-                    if (s1.find("\"") == std::string::npos)
-                    {
-                        for (int i = map_size - 1; i >= 0; i--)
-                        {
-                            if (Find_map_key(glb_map[i], left_val.as<std::string>()))
-                            {
-                                left_val = glb_map[i][left_val.as<std::string>()];
-                                break;
-                            }
-                        }
-                    }
-                }
+                    Is_Val_Name(left_val);
                 antlrcpp::Any right_val = visit(ctx->arith_expr(i + 1));
                 if (right_val.is<std::string>())
-                {
-                    std::string s1 = right_val.as<std::string>();
-                    if (s1.find("\"") == std::string::npos)
-                    {
-                        for (int i = map_size - 1; i >= 0; i--)
-                        {
-                            if (Find_map_key(glb_map[i], right_val.as<std::string>()))
-                            {
-                                right_val = glb_map[i][right_val.as<std::string>()];
-                                break;
-                            }
-                        }
-                    }
-                }
+                    Is_Val_Name(right_val);
                 switch ((int)comp_token)
                 {
                 case 1: // <
@@ -1723,20 +1582,7 @@ class EvalVisitor : public Python3BaseVisitor
             int map_size = glb_map.size();
             //判断左值是否为变量名
             if (ans.is<std::string>())
-            {
-                std::string s1 = ans.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], ans.as<std::string>()))
-                        {
-                            ans = glb_map[i][ans.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(ans);
             int x = Find_type(ans);
             int add_index = 1e9;
             int minus_index = 1e9;
@@ -1745,20 +1591,7 @@ class EvalVisitor : public Python3BaseVisitor
                 antlrcpp::Any tmp = visit(ctx->term(i + 1));
                 //判断右值是否为变量名
                 if (tmp.is<std::string>())
-                {
-                    std::string s1 = tmp.as<std::string>();
-                    if (s1.find("\"") == std::string::npos)
-                    {
-                        for (int i = map_size - 1; i >= 0; i--)
-                        {
-                            if (Find_map_key(glb_map[i], tmp.as<std::string>()))
-                            {
-                                tmp = glb_map[i][tmp.as<std::string>()];
-                                break;
-                            }
-                        }
-                    }
-                }
+                    Is_Val_Name(tmp);
                 if (add_size > 0 && add_rec != add_size)
                 {
                     add_index = ctx->ADD()[add_rec]->getSymbol()->getTokenIndex();
@@ -1917,38 +1750,12 @@ class EvalVisitor : public Python3BaseVisitor
             int map_size = glb_map.size();
             antlrcpp::Any ans = visit(ctx->factor(0));
             if (ans.is<std::string>())
-            {
-                std::string s1 = ans.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], ans.as<std::string>()))
-                        {
-                            ans = glb_map[i][ans.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(ans);
             for (int i = 1; i < token_num + 1; i++)
             {
                 antlrcpp::Any tmp = visit(ctx->factor(i));
                 if (tmp.is<std::string>())
-                {
-                    std::string s1 = tmp.as<std::string>();
-                    if (s1.find("\"") == std::string::npos)
-                    {
-                        for (int i = map_size - 1; i >= 0; i--)
-                        {
-                            if (Find_map_key(glb_map[i], tmp.as<std::string>()))
-                            {
-                                tmp = glb_map[i][tmp.as<std::string>()];
-                                break;
-                            }
-                        }
-                    }
-                }
+                    Is_Val_Name(tmp);
                 if (star_size > 0 && star_rec != star_size)
                 {
                     star_index = ctx->STAR(star_rec)->getSymbol()->getTokenIndex();
@@ -2296,20 +2103,7 @@ class EvalVisitor : public Python3BaseVisitor
             // 判断ans 是否为 变量名
             int map_size = glb_map.size();
             if (ans.is<std::string>())
-            {
-                std::string s1 = ans.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], ans.as<std::string>()))
-                        {
-                            ans = glb_map[i][ans.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(ans);
             if (ctx->ADD() != nullptr)
             {
                 if (ans.is<std::string>())
@@ -2360,22 +2154,7 @@ class EvalVisitor : public Python3BaseVisitor
                     std::cout << " ";
                 antlrcpp::Any tmp = visit(ctx->trailer()->arglist()->argument(i)->test());
                 if (tmp.is<std::string>())
-                {
-                    std::string s1 = tmp.as<std::string>();
-                    if (s1.find("\"") == std::string::npos)
-                    {
-                        std::string Key = tmp.as<std::string>();
-                        int map_size = glb_map.size();
-                        for (int i = map_size - 1; i >= 0; i--)
-                        {
-                            if (Find_map_key(glb_map[i], Key))
-                            {
-                                tmp = glb_map[i][Key];
-                                break;
-                            }
-                        }
-                    }
-                }
+                    Is_Val_Name(tmp);
                 if (tmp.is<std::string>())
                 {
                     std::string ans = tmp.as<std::string>();
@@ -2385,7 +2164,7 @@ class EvalVisitor : public Python3BaseVisitor
                 }
                 else if (tmp.is<double>())
                 {
-                    std::cout << setiosflags(ios::fixed|ios::showpoint)<<setprecision(6) << tmp.as<double>();
+                    std::cout << setiosflags(ios::fixed | ios::showpoint) << setprecision(6) << tmp.as<double>();
                 }
                 else if (tmp.is<Bigint>())
                 {
@@ -2408,20 +2187,7 @@ class EvalVisitor : public Python3BaseVisitor
             antlrcpp::Any r_val = visit(ctx->trailer()->arglist()->argument(0)->test());
             int map_size = glb_map.size();
             if (r_val.is<std::string>())
-            {
-                std::string s1 = r_val.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], r_val.as<std::string>()))
-                        {
-                            r_val = glb_map[i][r_val.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(r_val);
             if (r_val.is<Bigint>())
             {
                 return r_val;
@@ -2451,20 +2217,7 @@ class EvalVisitor : public Python3BaseVisitor
             antlrcpp::Any r_val = visit(ctx->trailer()->arglist()->argument(0)->test());
             int map_size = glb_map.size();
             if (r_val.is<std::string>())
-            {
-                std::string s1 = r_val.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], r_val.as<std::string>()))
-                        {
-                            r_val = glb_map[i][r_val.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(r_val);
             if (r_val.is<Bigint>())
             {
                 return (double)r_val.as<Bigint>();
@@ -2497,20 +2250,7 @@ class EvalVisitor : public Python3BaseVisitor
             antlrcpp::Any r_val = visit(ctx->trailer()->arglist()->argument(0)->test());
             int map_size = glb_map.size();
             if (r_val.is<std::string>())
-            {
-                string s1 = r_val.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], r_val.as<std::string>()))
-                        {
-                            r_val = glb_map[i][r_val.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(r_val);
             if (r_val.is<Bigint>())
             {
                 return (r_val.as<Bigint>() == Bigint(0)) ? false : true;
@@ -2540,20 +2280,7 @@ class EvalVisitor : public Python3BaseVisitor
             antlrcpp::Any r_val = visit(ctx->trailer()->arglist()->argument(0)->test());
             int map_size = glb_map.size();
             if (r_val.is<std::string>())
-            {
-                std::string s1 = r_val.as<std::string>();
-                if (s1.find("\"") == std::string::npos)
-                {
-                    for (int i = map_size - 1; i >= 0; i--)
-                    {
-                        if (Find_map_key(glb_map[i], r_val.as<std::string>()))
-                        {
-                            r_val = glb_map[i][r_val.as<std::string>()];
-                            break;
-                        }
-                    }
-                }
-            }
+                Is_Val_Name(r_val);
             if (r_val.is<Bigint>())
             {
                 std::string tmp_str = (std::string)r_val.as<Bigint>();
@@ -2613,20 +2340,7 @@ class EvalVisitor : public Python3BaseVisitor
                         std::string val_name = Typedargslist_node->tfpdef(i)->NAME()->toString();
                         antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument(i)->test());
                         if (val.is<std::string>())
-                        {
-                            string s1 = val.as<std::string>();
-                            if (s1.find("\"") == std::string::npos)
-                            {
-                                for (int i = map_size - 2; i >= 0; i--)
-                                {
-                                    if (Find_map_key(glb_map[i], val.as<std::string>()))
-                                    {
-                                        val = glb_map[i][val.as<std::string>()];
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                            Is_Val_Name(val);
                         if (val.is<std::string>())
                             glb_map[map_size - 1][val_name] = val.as<std::string>();
                         else if (val.is<Bigint>())
@@ -2641,22 +2355,11 @@ class EvalVisitor : public Python3BaseVisitor
                         std::string val_name = ctx->trailer()->arglist()->argument(i)->NAME()->toString();
                         antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument(i)->test());
                         if (val.is<std::string>())
-                        {
-                            string s1 = val.as<std::string>();
-                            if (s1.find("\"") == std::string::npos)
-                            {
-                                for (int i = map_size - 2; i >= 0; i--)
-                                {
-                                    if (Find_map_key(glb_map[i], val.as<std::string>()))
-                                    {
-                                        val = glb_map[i][val.as<std::string>()];
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                            Is_Val_Name(val);
                         if (val.is<std::string>())
+                        {
                             glb_map[map_size - 1][val_name] = val.as<std::string>();
+                        }
                         else if (val.is<Bigint>())
                             glb_map[map_size - 1][val_name] = val.as<Bigint>();
                         else if (val.is<double>())
@@ -2675,33 +2378,49 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                 }
             }
-            antlrcpp::Any ret = visitSuite(func_node->suite());
-            if (ret.is<flowcontrol>())
+            // 无参，或不传参的情况
+            else
             {
-                if (ret.as<flowcontrol>() == RETURN)
+                if(func_node -> parameters() -> typedargslist() != nullptr)
                 {
-                    ret = nullptr;
+                    Python3Parser::TypedargslistContext *Typedargslist_node = func_node->parameters()->typedargslist();
+                    int map_size = glb_map.size();
+                    for (int i = 0; i < Typedargslist_node->tfpdef().size(); i++)
+                    {
+                        std::string val_name = Typedargslist_node->tfpdef(i)->NAME()->toString();
+                        glb_map[map_size - 1][val_name] = visit(Typedargslist_node->test(i));
+                    }
+                }
+            }
+            antlrcpp::Any tmp = visitSuite(func_node->suite());
+            if (!tmp.is<RETURN_STMT>())
+                return nullptr; //     函数中不写return 的情况
+            else if (tmp.as<RETURN_STMT>().ret.is<std::vector<antlrcpp::Any>>())
+            {
+                std::vector<antlrcpp::Any> ans = tmp.as<RETURN_STMT>().ret;
+                if (ans.empty())
+                    tmp = nullptr;
+                else
+                {
+                    for (int j = 0; j < ans.size(); j++)
+                    {
+                        antlrcpp::Any val = ans[j];
+                        if (val.is<std::string>())
+                            Is_Val_Name(val);
+                        ans[j] = val;
+                    }
+                    tmp = ans;
                 }
             }
             else
             {
-                if (ret.is<std::vector<antlrcpp::Any>>())
-                {
-                    std::vector<antlrcpp::Any> ans = ret.as<std::vector<antlrcpp::Any>>();
-                    if (ans.empty())
-                        ret = nullptr;
-                    else if (ans.size() == 1)
-                    {
-                        ret = ans.front();
-                    }
-                    else
-                    {
-                        ret = ans;
-                    }
-                }
+                antlrcpp::Any x = tmp.as<RETURN_STMT>().ret;
+                if (x.is<std::string>())
+                    Is_Val_Name(x);
+                tmp = x;
             }
             glb_map.pop_back();
-            return ret; // 需要添加返回值
+            return tmp;
         }
     }
 
@@ -2773,9 +2492,7 @@ class EvalVisitor : public Python3BaseVisitor
     antlrcpp::Any visitTestlist(Python3Parser::TestlistContext *ctx) override
     {
         if (ctx->test().size() == 1)
-        {
             return visitTest(ctx->test(0));
-        }
         else
         {
             std::vector<antlrcpp::Any> ret;
@@ -2790,7 +2507,6 @@ class EvalVisitor : public Python3BaseVisitor
 
     antlrcpp::Any visitArglist(Python3Parser::ArglistContext *ctx) override
     {
-
         return visitArgument(ctx->argument(0));
     }
 
