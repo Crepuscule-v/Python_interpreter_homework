@@ -1532,11 +1532,12 @@ class EvalVisitor : public Python3BaseVisitor
                     exit(0);
                 }
                 }
+                if (flag == 0)
+                {
+                    return false;
+                }
             }
-            if (flag)
-                return true;
-            else
-                return false;
+            return true;
         }
     }
 
