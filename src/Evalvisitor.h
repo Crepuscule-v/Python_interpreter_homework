@@ -1186,12 +1186,17 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     else if (left_val.is<std::string>() && right_val.is<std::string>())
                     {
-                        std::string s1 = left_val.as<std::string>();
-                        std::string s2 = right_val.as<std::string>();
-                        s1 = s1.substr(1, s1.size() - 2);
-                        s2 = s2.substr(1, s2.size() - 2);
-                        if (s1 >= s2)
+                        if (left_val.as<std::string>() == "None" || right_val.as<std::string>() == "None")
                             flag = 0;
+                        else 
+                        {
+                            std::string s1 = left_val.as<std::string>();
+                            std::string s2 = right_val.as<std::string>();
+                            s1 = s1.substr(1, s1.size() - 2);
+                            s2 = s2.substr(1, s2.size() - 2);
+                            if (s1 >= s2)
+                                flag = 0;
+                        }
                     }
                     else
                     {
@@ -1251,12 +1256,17 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     else if (left_val.is<std::string>() && right_val.is<std::string>())
                     {
-                        std::string s1 = left_val.as<std::string>();
-                        std::string s2 = right_val.as<std::string>();
-                        s1 = s1.substr(1, s1.size() - 2);
-                        s2 = s2.substr(1, s2.size() - 2);
-                        if (s1 <= s2)
+                        if (left_val.as<std::string>() == "None" || right_val.as<std::string>() == "None")
                             flag = 0;
+                        else
+                        {
+                            std::string s1 = left_val.as<std::string>();
+                            std::string s2 = right_val.as<std::string>();
+                            s1 = s1.substr(1, s1.size() - 2);
+                            s2 = s2.substr(1, s2.size() - 2);
+                            if (s1 <= s2)
+                                flag = 0;
+                        }
                     }
                     else
                     {
@@ -1321,12 +1331,17 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     else if (left_val.is<std::string>() && right_val.is<std::string>())
                     {
-                        std::string s1 = left_val.as<std::string>();
-                        std::string s2 = right_val.as<std::string>();
-                        s1 = s1.substr(1, s1.size() - 2);
-                        s2 = s2.substr(1, s2.size() - 2);
-                        if (s1 != s2)
+                        if (left_val.as<std::string>() == "None" || right_val.as<std::string>() == "None")
                             flag = 0;
+                        else
+                        {
+                            std::string s1 = left_val.as<std::string>();
+                            std::string s2 = right_val.as<std::string>();
+                            s1 = s1.substr(1, s1.size() - 2);
+                            s2 = s2.substr(1, s2.size() - 2);
+                            if (s1 != s2)
+                                flag = 0;
+                        }
                     }
                     else
                     {
@@ -1386,12 +1401,17 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     else if (left_val.is<std::string>() && right_val.is<std::string>())
                     {
-                        std::string s1 = left_val.as<std::string>();
-                        std::string s2 = right_val.as<std::string>();
-                        s1 = s1.substr(1, s1.size() - 2);
-                        s2 = s2.substr(1, s2.size() - 2);
-                        if (s1 < s2)
+                        if (left_val.as<std::string>() == "None" || right_val.as<std::string>() == "None")
                             flag = 0;
+                        else
+                        {
+                            std::string s1 = left_val.as<std::string>();
+                            std::string s2 = right_val.as<std::string>();
+                            s1 = s1.substr(1, s1.size() - 2);
+                            s2 = s2.substr(1, s2.size() - 2);
+                            if (s1 < s2)
+                                flag = 0;
+                        }
                     }
                     else
                     {
@@ -1451,12 +1471,17 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     else if (left_val.is<std::string>() && right_val.is<std::string>())
                     {
-                        std::string s1 = left_val.as<std::string>();
-                        std::string s2 = right_val.as<std::string>();
-                        s1 = s1.substr(1, s1.size() - 2);
-                        s2 = s2.substr(1, s2.size() - 2);
-                        if (s1 > s2)
+                        if (left_val.as<std::string>() == "None" || right_val.as<std::string>() == "None")
                             flag = 0;
+                        else
+                        {
+                            std::string s1 = left_val.as<std::string>();
+                            std::string s2 = right_val.as<std::string>();
+                            s1 = s1.substr(1, s1.size() - 2);
+                            s2 = s2.substr(1, s2.size() - 2);
+                            if (s1 > s2)
+                                flag = 0;
+                        }
                     }
                     else
                     {
@@ -1516,12 +1541,17 @@ class EvalVisitor : public Python3BaseVisitor
                     }
                     else if (left_val.is<std::string>() && right_val.is<std::string>())
                     {
-                        std::string s1 = left_val.as<std::string>();
-                        std::string s2 = right_val.as<std::string>();
-                        s1 = s1.substr(1, s1.size() - 2);
-                        s2 = s2.substr(1, s2.size() - 2);
-                        if (s1 == s2)
+                        if (left_val.as<std::string>() == "None" || right_val.as<std::string>() == "None")
                             flag = 0;
+                        else
+                        {
+                            std::string s1 = left_val.as<std::string>();
+                            std::string s2 = right_val.as<std::string>();
+                            s1 = s1.substr(1, s1.size() - 2);
+                            s2 = s2.substr(1, s2.size() - 2);
+                            if (s1 == s2)
+                                flag = 0;
+                        }
                     }
                     else
                     {
@@ -2183,9 +2213,14 @@ class EvalVisitor : public Python3BaseVisitor
                     if (tmp.is<std::string>())
                     {
                         std::string ans = tmp.as<std::string>();
-                        int len = ans.size();
-                        ans = ans.substr(1, len - 2);
-                        std::cout << ans;
+                        if (ans == "None")
+                            std::cout << "None";
+                        else 
+                        {
+                            int len = ans.size();
+                            ans = ans.substr(1, len - 2);
+                            std::cout << ans;
+                        }
                     }
                     else if (tmp.is<double>())
                     {
