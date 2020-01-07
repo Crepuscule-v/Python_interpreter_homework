@@ -2354,28 +2354,34 @@ class EvalVisitor : public Python3BaseVisitor
                 int contain_null_val_num = Typedargslist_node->tfpdef().size();      //所有的变量数量
                 // 总共有 argument_num 个参数
                 int map_size = glb_map.size();
+                std::vector<antlrcpp::Any> rec;
+                for (int i = 0; i < incoming_val_num; i++)
+                {
+                    antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument(i)->test());
+                    if (val.is<std::string>())
+                    {
+                        string s1 = val.as<std::string>();
+                        if (s1.find("\"") == std::string::npos)
+                        {
+                            for (int i = map_size - 2; i >= 0; i--)
+                            {
+                                if (Find_map_key(glb_map[i], val.as<std::string>()))
+                                {
+                                    val = glb_map[i][val.as<std::string>()];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    rec.push_back(val);
+                }
                 for (int i = 0; i < incoming_val_num; i++)
                 {
                     if (ctx->trailer()->arglist()->argument(i)->ASSIGN() == nullptr)
                     {
                         // postion 传参
                         std::string val_name = Typedargslist_node->tfpdef(i)->NAME()->toString();
-                        antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument(i)->test());
-                        if (val.is<std::string>())
-                        {   
-                            string s1 = val.as<std::string>();
-                            if (s1.find("\"") == std::string::npos)
-                            {
-                                for (int i = map_size - 2; i >= 0; i--)
-                                {
-                                    if (Find_map_key(glb_map[i], val.as<std::string>()))
-                                    {
-                                        val = glb_map[i][val.as<std::string>()];
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                        antlrcpp::Any val = rec[i];
                         if (val.is<std::string>())
                             glb_map[map_size - 1][val_name] = val.as<std::string>();
                         else if (val.is<Bigint>())
@@ -2388,23 +2394,7 @@ class EvalVisitor : public Python3BaseVisitor
                     else // keyword 传参
                     {
                         std::string val_name = ctx->trailer()->arglist()->argument(i)->NAME()->toString();
-                        antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument(i)->test());
-                        if (val.is<std::string>())
-                        {
-                            int map_size = glb_map.size();
-                            string s1 = val.as<std::string>();
-                            if (s1.find("\"") == std::string::npos)
-                            {
-                                for (int i = map_size - 2; i >= 0; i--)
-                                {
-                                    if (Find_map_key(glb_map[i], val.as<std::string>()))
-                                    {
-                                        val = glb_map[i][val.as<std::string>()];
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                        antlrcpp::Any val = rec[i];
                         if (val.is<std::string>())
                         {
                             glb_map[map_size - 1][val_name] = val.as<std::string>();
