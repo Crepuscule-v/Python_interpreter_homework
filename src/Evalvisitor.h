@@ -1805,6 +1805,10 @@ class EvalVisitor : public Python3BaseVisitor
                     {
                         ans = ans.as<double>() * double(tmp.as<Bigint>());
                     }
+                    else if (ans.is<double>() && tmp.is<double>())
+                    {
+                        ans = ans.as<double>() * tmp.as<double>();
+                    }
                     else if (ans.is<Bigint>() && tmp.is<std::string>())
                     {
                         if (ans.as<Bigint>() == (Bigint)0 || ans.as<Bigint>() < (Bigint)0)
