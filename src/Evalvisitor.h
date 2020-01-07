@@ -244,7 +244,7 @@ class EvalVisitor : public Python3BaseVisitor
             }
             return 1;
         }
-        if (sign_num == 1 && ret.is<std::vector<antlrcpp::Any>>())
+        else if (sign_num == 1 && ret.is<std::vector<antlrcpp::Any>>())
         {
             int val_num = ctx->testlist(0)->test().size();
             int right_num = ret.as<std::vector<antlrcpp::Any>>().size();
@@ -845,6 +845,7 @@ class EvalVisitor : public Python3BaseVisitor
         {
             return visitSuite(ctx->suite(num));
         }
+        return nullptr;
     }
 
     antlrcpp::Any visitWhile_stmt(Python3Parser::While_stmtContext *ctx) override
@@ -880,7 +881,6 @@ class EvalVisitor : public Python3BaseVisitor
             std::cerr << "Error : Invalid judgment conditions !\n";
             exit(0);
         }
-
         while (flag)
         {
             ret = visitSuite(ctx->suite());
@@ -2142,45 +2142,53 @@ class EvalVisitor : public Python3BaseVisitor
 
     antlrcpp::Any visitAtom_expr(Python3Parser::Atom_exprContext *ctx) override
     {
-        if (!ctx->trailer())
+        if (ctx->trailer() == nullptr)
             return visitAtom(ctx->atom());
         std::string ret = ctx->atom()->NAME()->toString();
         if (ret == "print")
         {
-            int argument_size = ctx->trailer()->arglist()->argument().size();
-            for (int i = 0; i < argument_size; i++)
+            if(ctx -> trailer() -> arglist() == nullptr)
             {
-                if (i)
-                    std::cout << " ";
-                antlrcpp::Any tmp = visit(ctx->trailer()->arglist()->argument(i)->test());
-                if (tmp.is<std::string>())
-                    Is_Val_Name(tmp);
-                if (tmp.is<std::string>())
-                {
-                    std::string ans = tmp.as<std::string>();
-                    int len = ans.size();
-                    ans = ans.substr(1, len - 2);
-                    std::cout << ans;
-                }
-                else if (tmp.is<double>())
-                {
-                    std::cout << setiosflags(ios::fixed | ios::showpoint) << setprecision(6) << tmp.as<double>();
-                }
-                else if (tmp.is<Bigint>())
-                {
-                    std::cout << tmp.as<Bigint>();
-                }
-                else if (tmp.is<bool>())
-                {
-                    bool x = tmp.as<bool>();
-                    if (x)
-                        std::cout << "True";
-                    else
-                        std::cout << "False";
-                }
+                std::cout << '\n';
+                return nullptr;
             }
-            std::cout << std::endl;
-            return 1;
+            else
+            {
+                int argument_size = ctx->trailer()->arglist()->argument().size();
+                for (int i = 0; i < argument_size; i++)
+                {
+                    if (i)
+                        std::cout << " ";
+                    antlrcpp::Any tmp = visit(ctx->trailer()->arglist()->argument(i)->test());
+                    if (tmp.is<std::string>())
+                        Is_Val_Name(tmp);
+                    if (tmp.is<std::string>())
+                    {
+                        std::string ans = tmp.as<std::string>();
+                        int len = ans.size();
+                        ans = ans.substr(1, len - 2);
+                        std::cout << ans;
+                    }
+                    else if (tmp.is<double>())
+                    {
+                        std::cout << setiosflags(ios::fixed | ios::showpoint) << setprecision(6) << tmp.as<double>();
+                    }
+                    else if (tmp.is<Bigint>())
+                    {
+                        std::cout << tmp.as<Bigint>();
+                    }
+                    else if (tmp.is<bool>())
+                    {
+                        bool x = tmp.as<bool>();
+                        if (x)
+                            std::cout << "True";
+                        else
+                            std::cout << "False";
+                    }
+                }
+                std::cout << std::endl;
+                return nullptr;
+            }
         }
         else if (ret == "int")
         {
@@ -2340,7 +2348,20 @@ class EvalVisitor : public Python3BaseVisitor
                         std::string val_name = Typedargslist_node->tfpdef(i)->NAME()->toString();
                         antlrcpp::Any val = visit(ctx->trailer()->arglist()->argument(i)->test());
                         if (val.is<std::string>())
-                            Is_Val_Name(val);
+                        {   
+                            string s1 = val.as<std::string>();
+                            if (s1.find("\"") == std::string::npos)
+                            {
+                                for (int i = map_size - 2; i >= 0; i--)
+                                {
+                                    if (Find_map_key(glb_map[i], val.as<std::string>()))
+                                    {
+                                        val = glb_map[i][val.as<std::string>()];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         if (val.is<std::string>())
                             glb_map[map_size - 1][val_name] = val.as<std::string>();
                         else if (val.is<Bigint>())
@@ -2514,6 +2535,7 @@ class EvalVisitor : public Python3BaseVisitor
             {
                 antlrcpp::Any ans = visit(ctx->test(i));
                 ret.push_back(ans);
+                std::cout << ans.as<Bigint>();
             }
             return ret;
         }
