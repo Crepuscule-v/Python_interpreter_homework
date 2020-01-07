@@ -1117,18 +1117,22 @@ class EvalVisitor : public Python3BaseVisitor
         {
             int x = ctx->comp_op().size();
             bool flag = 1;
+            int map_size = glb_map.size();
+            antlrcpp::Any left_val = visit(ctx->arith_expr(0));
+            if (left_val.is<std::string>())
+                Is_Val_Name(left_val);
+            std::vector<antlrcpp::Any> rec;
+            rec.push_back(left_val);
             for (int i = 0; i < x; i++)
             {
+                left_val = rec[0];
                 antlrcpp::Any comp_token_enum = visit(ctx->comp_op(i));
                 double comp_token = comp_token_enum.as<double>();
-                antlrcpp::Any left_val = visit(ctx->arith_expr(i));
-                int map_size = glb_map.size();
-                //std::cout << map_size;
-                if (left_val.is<std::string>())
-                    Is_Val_Name(left_val);
                 antlrcpp::Any right_val = visit(ctx->arith_expr(i + 1));
                 if (right_val.is<std::string>())
                     Is_Val_Name(right_val);
+                rec.pop_back();
+                rec.push_back(right_val);
                 switch ((int)comp_token)
                 {
                 case 1: // <
