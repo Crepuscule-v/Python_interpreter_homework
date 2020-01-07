@@ -255,8 +255,10 @@ Bigint Bigint::operator%=(const Bigint &B2) {
 bool operator>(const Bigint &B1, const Bigint &B2) {
     if (B1.sign > B2.sign) return true;
     if (B1.sign < B2.sign) return false;
-    if (B1.length > B2.length && B1.sign > 0 && B2.sign > 0) return true;
+    if ((B1.length > B2.length) && B1.sign > 0 && B2.sign > 0) return true;
+    else if ((B1.length < B2.length) && B1.sign > 0 && B2.sign > 0) return false;
     if (B1.length < B2.length && B1.sign ==0 && B2.sign == 0) return true;
+    else if ((B1.length > B2.length) && B1.sign == 0 && B2.sign == 0) return false;
     int i = B1.val.size() - 1;
     if(B1.sign == 1 && B2.sign == 1)
     {
