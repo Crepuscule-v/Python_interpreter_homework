@@ -1950,6 +1950,15 @@ class EvalVisitor : public Python3BaseVisitor
                         }
                         ans = ans.as<double>() / (double)tmp.as<Bigint>();
                     }
+                    else if (ans.is<double>() && tmp.is<double>())
+                    {
+                        if (tmp.as<double>() == 0)
+                        {
+                            std::cerr << "Error : The divisor cannot be zero!\n";
+                            exit(0);
+                        }
+                        ans = ans.as<double>() / tmp.as<double>();
+                    }
                     else if (ans.is<double>() && tmp.is<bool>())
                     {
                         if (tmp.as<bool>() == false)
