@@ -11,22 +11,18 @@
 #include <iomanip>
 
 std::vector<std::map<std::string, antlrcpp::Any>> glb_map;
-//我再单独搞一张存funcdef 名字的 map
 std::map<std::string, Python3Parser::FuncdefContext *> func_map;
+
 class EvalVisitor : public Python3BaseVisitor
 {
     //flow_control
-    class BREAK_STMT
-    {
-    };
-    class CONTINUE_STMT
-    {
-    };
+    class BREAK_STMT{ };
+    class CONTINUE_STMT{ };
     class RETURN_STMT
     {
     public:
         antlrcpp::Any ret;
-        RETURN_STMT(const antlrcpp::Any &tmp) { ret = tmp; };
+        RETURN_STMT(const antlrcpp::Any &tmp) { ret = tmp;};
     };
 
     //判断any 的类型
@@ -2577,8 +2573,9 @@ class EvalVisitor : public Python3BaseVisitor
             for (int i = 0; i < ctx->test().size(); i++)
             {
                 antlrcpp::Any ans = visit(ctx->test(i));
+                if(ans.is<std::string>())
+                    Is_Val_Name(ans);
                 ret.push_back(ans);
-                std::cout << ans.as<Bigint>();
             }
             return ret;
         }
